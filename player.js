@@ -10,7 +10,7 @@ const win = [
   [2, 4, 6],
 ];
 let nCountMove = 0;
-const board = ["", "", "", "", "", "", "", "", ""];
+let board = ["", "", "", "", "", "", "", "", ""];
 const changePlayerTurn = () => {
   bPlayerTurn = !bPlayerTurn;
 };
@@ -35,17 +35,18 @@ const playMove = (nIndex) => {
         return "draw";
       }
       if (nWinner != "draw") {
+        board = ["", "", "", "", "", "", "", "", ""];
         return nWinner;
       } else {
         if (nCountMove <= 8) changePlayerTurn();
+        return null;
       }
     } else {
       if (nCountMove <= 8) changePlayerTurn();
+      return null;
     }
-    console.log(board);
-    changePlayerTurn();
   } else {
-    console.log("error");
+    return "Invalid Move";
   }
 };
 
