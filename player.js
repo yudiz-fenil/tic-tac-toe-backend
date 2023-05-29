@@ -10,40 +10,50 @@ const win = [
   [2, 4, 6],
 ];
 let nCountMove = 0;
-let board = ["", "", "", "", "", "", "", "", ""];
+let aBoard = [null, null, null, null, null, null, null, null, null];
 const changePlayerTurn = () => {
   bPlayerTurn = !bPlayerTurn;
 };
 
-const checkWinner = (board) => {
+const checkWinner = (aBoard) => {
   for (let i = 0; i < win.length; i++) {
     const [a, b, c] = win[i];
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a];
+    if (aBoard[a] && aBoard[a] === aBoard[b] && aBoard[a] === aBoard[c]) {
+      return aBoard[a];
     }
   }
   return "draw";
 };
 
+const availableMoves = (aBoard) => {
+  const emptyIndexes = [];
+  aBoard.forEach((value, index) => {
+    if (value === null) {
+      emptyIndexes.push(index);
+    }
+  });
+  return emptyIndexes;
+};
+
 const playMove = (nIndex) => {
-  if (board[nIndex] == "") {
-    board[nIndex] = bPlayerTurn ? "cross" : "zero";
+  if (aBoard[nIndex] == null) {
+    aBoard[nIndex] = bPlayerTurn ? "cross" : "zero";
     nCountMove++;
     if (nCountMove > 4) {
-      const nWinner = checkWinner(board);
+      const nWinner = checkWinner(aBoard);
       if (nCountMove == 9 && nWinner == "draw") {
         return "draw";
       }
       if (nWinner != "draw") {
-        board = ["", "", "", "", "", "", "", "", ""];
+        aBoard = [null, null, null, null, null, null, null, null, null];
         return nWinner;
       } else {
         if (nCountMove <= 8) changePlayerTurn();
-        return null;
+        return availableMoves(aBoard);
       }
     } else {
       if (nCountMove <= 8) changePlayerTurn();
-      return null;
+      return availableMoves(aBoard);
     }
   } else {
     return "Invalid Move";

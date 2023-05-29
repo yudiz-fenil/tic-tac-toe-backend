@@ -42,10 +42,10 @@ const resPlayerJoined = (iPlayerId) => {
   return { sEventName: "resPlayerJoined", oData };
 };
 
-const resPlayerTurn = (iPlayerId) => {
+const resPlayerTurn = (iPlayerId, aMoves) => {
   const oData = {};
   oData.iPlayerId = iPlayerId;
-  oData.aMoves = [];
+  oData.aMoves = aMoves;
   return { sEventName: "resPlayerTurn", oData };
 };
 
@@ -55,11 +55,28 @@ const resMove = (nIndex) => {
   return { sEventName: "resMove", oData };
 };
 
+const resBoardState = (aPlayers) => {
+  const oData = {};
+  oData.aPlayers = aPlayers;
+  return { sEventName: "resBoardState", oData };
+};
+
+const resBoardFull = () => {
+  const oData = {};
+  oData.sMessage = "Board is Full";
+  return { sEventName: "resBoardFull", oData };
+};
+
+const oPlayersByRoom = [];
 io.on("connection", (socket) => {
   console.log("socket.id", socket.id);
   let iPlayerId = socket.id;
   let iBoardId = "";
   let isGameOver = false;
+
+  const emitToSocketId = (id, event) => {
+    io.to(id).emit(iBoardId, event);
+  };
 
   const emit = (event) => {
     socket.to(iBoardId).emit(iBoardId, event);
@@ -70,33 +87,35 @@ io.on("connection", (socket) => {
   };
 
   socket.on("reqJoinBoard", (data) => {
-    console.log("reqJoinBoard", data);
     iBoardId = data.sBoard;
-    socket.join(data.sBoard);
+    if (!oPlayersByRoom[iBoardId]) {
+      oPlayersByRoom[iBoardId] = [];
+    }
+    if (oPlayersByRoom[iBoardId].length < 2) {
+      socket.join(iBoardId);
+      oPlayersByRoom[iBoardId].push(iPlayerId);
 
-    socket.on(iBoardId, (data) => {
-      console.log(data);
-      if (!isGameOver) {
-        switch (data.sEventName) {
-          case "reqMove":
-            emit(resMove(data.oData.nIndex));
-            const move = player.playMove(data.oData.nIndex);
-            console.log("move", move);
-            if (typeof move != "string") {
-              emit(resPlayerTurn(iPlayerId));
-            } else {
-              emitToAll(resResult(move));
-              isGameOver = true;
-            }
-            break;
+      emitToSocketId(iPlayerId, resBoardState(oPlayersByRoom[iBoardId]));
 
-          default:
-            break;
+      socket.on(iBoardId, (data) => {
+        console.log(data);
+        if (!isGameOver && data.sEventName == "reqMove") {
+          emit(resMove(data.oData.nIndex));
+          const move = player.playMove(data.oData.nIndex);
+          if (typeof move != "string") {
+            emitToAll(resPlayerTurn(iPlayerId, move));
+          } else {
+            emitToAll(resResult(move));
+            isGameOver = true;
+          }
         }
-      }
-    });
-
+      });
+    } else {
+      emitToSocketId(iPlayerId, resBoardFull());
+      return;
+    }
     emit(resPlayerJoined(iPlayerId));
+    
   });
 });
 
