@@ -1,4 +1,3 @@
-let bPlayerTurn = true;
 const win = [
   [0, 1, 2],
   [3, 4, 5],
@@ -9,22 +8,15 @@ const win = [
   [0, 4, 8],
   [2, 4, 6],
 ];
-let nCountMove = 0;
-let aBoard = [null, null, null, null, null, null, null, null, null];
-const changePlayerTurn = () => {
-  bPlayerTurn = !bPlayerTurn;
-};
-
 const checkWinner = (aBoard) => {
   for (let i = 0; i < win.length; i++) {
     const [a, b, c] = win[i];
     if (aBoard[a] && aBoard[a] === aBoard[b] && aBoard[a] === aBoard[c]) {
-      return aBoard[a];
+      return { sWinner: aBoard[a], aCombination: [a, b, c] };
     }
   }
-  return "draw";
+  return { sWinner: "draw" };
 };
-
 const availableMoves = (aBoard) => {
   const emptyIndexes = [];
   aBoard.forEach((value, index) => {
@@ -34,19 +26,24 @@ const availableMoves = (aBoard) => {
   });
   return emptyIndexes;
 };
-
 const playMove = (nIndex) => {
+  let bPlayerTurn = true;
+  let nCountMove = 0;
+  let aBoard = [null, null, null, null, null, null, null, null, null];
+  const changePlayerTurn = () => {
+    bPlayerTurn = !bPlayerTurn;
+  };
   if (aBoard[nIndex] == null) {
     aBoard[nIndex] = bPlayerTurn ? "cross" : "zero";
     nCountMove++;
     if (nCountMove > 4) {
-      const nWinner = checkWinner(aBoard);
-      if (nCountMove == 9 && nWinner == "draw") {
+      const oWinner = checkWinner(aBoard);
+      if (nCountMove == 9 && oWinner.sWinner == "draw") {
         return "draw";
       }
-      if (nWinner != "draw") {
+      if (oWinner.sWinner != "draw") {
         aBoard = [null, null, null, null, null, null, null, null, null];
-        return nWinner;
+        return oWinner;
       } else {
         if (nCountMove <= 8) changePlayerTurn();
         return availableMoves(aBoard);

@@ -16,28 +16,20 @@ const io = new Server(server, {
   },
 });
 
-// io.on("connection", (socket) => {
-//   console.log("socket.id", socket.id);
+const randomTurn = () => {
+  return Math.random() < 0.5;
+};
 
-//   socket.on("reqJoinBoard", (data) => {
-//     console.log(data);
-//   });
-
-//   socket.on("reqMove", (data) => {
-//     console.log(data.nIndex);
-//     // console.log(player.playMove(data.nIndex));
-//     socket.broadcast.emit("resMove", { nIndex: data.nIndex });
-//   });
-// });
-
-const resResult = (sWinner) => {
+const resResult = (sWinner, aCombination) => {
   const oData = {};
   oData.sWinner = sWinner;
+  oData.aCombination = aCombination;
   return { sEventName: "resResult", oData };
 };
 
-const resPlayerJoined = (iPlayerId) => {
+const resPlayerJoined = (iPlayerId, iBoardId) => {
   const oData = {};
+  oData.iBoardId = iBoardId;
   oData.iPlayerId = iPlayerId;
   return { sEventName: "resPlayerJoined", oData };
 };
@@ -55,8 +47,9 @@ const resMove = (nIndex) => {
   return { sEventName: "resMove", oData };
 };
 
-const resBoardState = (aPlayers) => {
+const resBoardState = (aPlayers, iBoardId) => {
   const oData = {};
+  oData.iBoardId = iBoardId;
   oData.aPlayers = aPlayers;
   return { sEventName: "resBoardState", oData };
 };
@@ -95,7 +88,10 @@ io.on("connection", (socket) => {
       socket.join(iBoardId);
       oPlayersByRoom[iBoardId].push(iPlayerId);
 
-      emitToSocketId(iPlayerId, resBoardState(oPlayersByRoom[iBoardId]));
+      emitToSocketId(
+        iPlayerId,
+        resBoardState(oPlayersByRoom[iBoardId], iBoardId)
+      );
 
       socket.on(iBoardId, (data) => {
         console.log(data);
@@ -103,7 +99,12 @@ io.on("connection", (socket) => {
           emit(resMove(data.oData.nIndex));
           const move = player.playMove(data.oData.nIndex);
           if (typeof move != "string") {
-            emitToAll(resPlayerTurn(iPlayerId, move));
+            console.log(move);
+            if (move.sWinner) {
+              emitToAll(resResult(move.sWinner, move.aCombination));
+            } else {
+              emitToAll(resPlayerTurn(iPlayerId, move));
+            }
           } else {
             emitToAll(resResult(move));
             isGameOver = true;
@@ -114,8 +115,7 @@ io.on("connection", (socket) => {
       emitToSocketId(iPlayerId, resBoardFull());
       return;
     }
-    emit(resPlayerJoined(iPlayerId));
-    
+    emit(resPlayerJoined(iPlayerId, iBoardId));
   });
 });
 
