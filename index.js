@@ -97,7 +97,7 @@ io.on("connection", (socket) => {
         console.log(data);
         if (!isGameOver && data.sEventName == "reqMove") {
           emit(resMove(data.oData.nIndex));
-          const move = player.playMove(data.oData.nIndex);
+          const move = new player.playMove(data.oData.nIndex);
           if (typeof move != "string") {
             console.log(move);
             if (move.sWinner) {
@@ -116,6 +116,10 @@ io.on("connection", (socket) => {
       return;
     }
     emit(resPlayerJoined(iPlayerId, iBoardId));
+    if (oPlayersByRoom[iBoardId].length === 2) {
+      const aMoves = player.playMove(-1);
+      emitToAll(resPlayerTurn(iPlayerId, aMoves));
+    }
   });
 });
 

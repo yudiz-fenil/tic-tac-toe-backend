@@ -33,6 +33,9 @@ const playMove = (nIndex) => {
   const changePlayerTurn = () => {
     bPlayerTurn = !bPlayerTurn;
   };
+  if (nIndex == -1) {
+    return availableMoves(aBoard);
+  }
   if (aBoard[nIndex] == null) {
     aBoard[nIndex] = bPlayerTurn ? "cross" : "zero";
     nCountMove++;
